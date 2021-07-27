@@ -1,5 +1,6 @@
 mod comms;
 mod err;
+mod input;
 
 use std::error::Error;
 use std::io;
@@ -8,8 +9,6 @@ use std::ffi::OsString;
 use std::thread;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::process::{ChildStdin, ChildStdout, ChildStderr};
-use tui::backend::TermionBackend;
-use tui::terminal::Terminal;
 use clap::Clap;
 use termion::raw::IntoRawMode;
 use termion::input::{TermRead, MouseTerminal};
@@ -33,7 +32,7 @@ fn child_read_stdout(stdout: ChildStdout) -> Receiver<serde_json::Result<InComms
         let br = BufReader::new(stream);
         for line in br.lines() {
             if let Ok(line1) = line {
-                tx.send(serde_json::from_str(&line1)).unwrap();
+                tx.send(serde_json::Result::Ok(InComms::Draw(line1))).unwrap();
             }
         }
     });
@@ -85,9 +84,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let stdout = std::io::stdout().into_raw_mode()?;
     let stdout = MouseTerminal::from(stdout);
     let mut stdout = AlternateScreen::from(stdout);
-    write!(stdout, "{}", termion::cursor::Hide)?;
-    let backend = TermionBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
 
     let mut child = std::process::Command::new(opts.cmd)
         .args(opts.cmd_args)
@@ -101,11 +97,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let child_stderr = child_read_stderr(child.stderr.take().unwrap());
     let child_stdin = child_write_stdin(child.stdin.take().unwrap());
 
-    terminal.clear()?;
+    writeln!(stdout, "{}", termion::clear::All)?;
+    writeln!(stdout, "{}", termion::cursor::Hide)?;
 
-    let mut terminal_size = terminal.size()?;
+    let mut terminal_size = termion::terminal_size()?;
 
     loop {
+        thread::sleep(std::time::Duration::from_millis(20));
 
         if let Some(status) = child.try_wait()? {
             if status.success() {
@@ -115,16 +113,25 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         }
 
-        let new_terminal_size = terminal.size()?;
+        let new_terminal_size = termion::terminal_size()?;
         if terminal_size != new_terminal_size {
             terminal_size = new_terminal_size;
             child_stdin.send(OutComms::TerminalSize(terminal_size))?;
         }
 
-        // collect terminal input (host_stdin),
+        // collect terminal input (host_stdin)
         for hi in host_stdin.try_iter() {
             // relay terminal input to child (child_stdin)
-            child_stdin.send(OutComms::InputEvent(hi?))?;
+            match hi.map(|te| input::Event::from_termion_event(te)) {
+                Ok(maybe_ev) => {
+                    if let Some(ev) = maybe_ev {
+                        child_stdin.send(OutComms::InputEvent(ev))?;
+                    }
+                },
+                Err(e) => {
+                    return Err(Box::new(e));
+                }
+            }
         }
 
         // collect child stderr
@@ -133,18 +140,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             // gracefully fail if there were lines in child stderr
             return Err(Box::new(ChildError::Stderr(child_errs)));
         }
-
-        // collect child stdout
+        
+        // collect child comms from child stdout
         for co in child_stdout.try_iter() {
             match co {
                 Err(serde_err) => {
-                    child_stdin.send(OutComms::JsonError(format!("{}", serde_err)))?
+                    child_stdin.send(OutComms::JsonError(format!("{}", serde_err)))?;
                 },
                 Ok(comm) => match comm {
-                    InComms::Render(_ui) => {
-                        terminal.draw(|_f| {
-
-                        })?;
+                    InComms::Draw(s) => {
+                        writeln!(stdout, "{}", s)?;
+                        writeln!(stdout, "{}", termion::cursor::Goto::default())?;
                     }
                 }
             }

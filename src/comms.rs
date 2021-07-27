@@ -1,19 +1,14 @@
 use serde::{Serialize, Deserialize};
-use tui::layout::{Rect};
+use crate::input;
 
 #[derive(Debug, Clone, Serialize)]
 pub enum OutComms {
-    InputEvent(termion::event::Event),
+    InputEvent(input::Event),
     JsonError(String),
-    TerminalSize(Rect),
+    TerminalSize((u16, u16)),
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub enum InComms {
-    Render(UiRepr)
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub enum UiRepr {
-
+    Draw(String)
 }

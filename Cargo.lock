@@ -24,12 +24,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 
 [[package]]
-name = "cassowary"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df8670b8c7b9dae1793364eafadf7239c40d669904660c5960d74cfd80b46a53"
-
-[[package]]
 name = "clap"
 version = "3.0.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -267,36 +261,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "termion"
-version = "1.5.6"
-source = "git+https://github.com/dom-lis/termion?branch=serde#a59b79e5f48b051dc0a6244f9557ede6e99cf11f"
-dependencies = [
- "libc",
- "numtoa",
- "redox_syscall 0.2.8",
- "redox_termios",
- "serde",
-]
-
-[[package]]
 name = "textwrap"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "203008d98caf094106cfaba70acfed15e18ed3ddb7d94e49baec153a2b462789"
 dependencies = [
- "unicode-width",
-]
-
-[[package]]
-name = "tui"
-version = "0.15.0"
-source = "git+https://github.com/dom-lis/tui-rs?branch=serde#7e9998105d5c580c2d4201000bbe1f27501df0cd"
-dependencies = [
- "bitflags",
- "cassowary",
- "serde",
- "termion 1.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "unicode-segmentation",
  "unicode-width",
 ]
 
@@ -307,8 +276,7 @@ dependencies = [
  "clap",
  "serde",
  "serde_json",
- "termion 1.5.6 (git+https://github.com/dom-lis/termion?branch=serde)",
- "tui",
+ "termion",
 ]
 
 [[package]]
