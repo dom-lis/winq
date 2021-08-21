@@ -1,22 +1,21 @@
-mod comms;
-mod err;
+mod error;
 mod input;
+mod stdio;
+
+use error::ChildError;
 
 use std::error::Error;
 use std::io;
-use std::io::{Stdin, Write};
+use std::io::Write;
 use std::ffi::OsString;
 use std::thread;
-use std::sync::mpsc::{channel, Receiver, Sender};
-use std::process::{ChildStdin, ChildStdout, ChildStderr};
+use std::collections::HashMap;
 use clap::Clap;
+use regex::Regex;
 use termion::raw::IntoRawMode;
-use termion::input::{TermRead, MouseTerminal};
-use termion::event::Event as TermionEvent;
+use termion::input::MouseTerminal;
 use termion::screen::AlternateScreen;
-use crate::comms::{InComms, OutComms};
-use crate::err::ChildError;
-
+use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Clap)]
 struct Opts {
@@ -24,66 +23,24 @@ struct Opts {
     cmd_args: Vec<OsString>
 }
 
-fn child_read_stdout(stdout: ChildStdout) -> Receiver<serde_json::Result<InComms>> {
-    let (tx, rx) = channel();
-    thread::spawn(move || {
-        use std::io::{BufRead, BufReader};
-        let stream = stdout;
-        let br = BufReader::new(stream);
-        for line in br.lines() {
-            if let Ok(line1) = line {
-                tx.send(serde_json::Result::Ok(InComms::Draw(line1))).unwrap();
-            }
-        }
-    });
-    rx
-}
-
-fn child_read_stderr(stderr: ChildStderr) -> Receiver<io::Result<String>> {
-    let (tx, rx) = channel();
-    thread::spawn(move || {
-        use std::io::{BufRead, BufReader};
-        let stream = stderr;
-        let br = BufReader::new(stream);
-        for line in br.lines() {
-            tx.send(line).unwrap();
-        }
-    });
-    rx
-}
-
-fn child_write_stdin(stdin: ChildStdin) -> Sender<OutComms> {
-    let (tx, rx) = channel();
-    thread::spawn(move || {
-        let mut stream = stdin;
-        for c in rx {
-            if let Ok(s) = serde_json::to_string(&c) {
-                writeln!(stream, "{}", s).unwrap();
-            }
-        }
-    });
-    tx
-}
-
-fn host_read_stdin(stdin: Stdin) -> Receiver<io::Result<TermionEvent>> {
-    let (tx, rx) = channel();
-    thread::spawn(move || {
-        for i in stdin.events() {
-            tx.send(i).unwrap();
-        }
-    });
-    rx
-}
-
 fn main() -> Result<(), Box<dyn Error>> {
+
+    let put_cmd_re = Regex::new(r"put:(\d+):(.*)").unwrap();
+    let erase_cmd_re = Regex::new(r"erase:(\d+)").unwrap();
 
     let opts = Opts::parse();
 
-    let _stderr = std::io::stderr();
-    let stdin = std::io::stdin();
-    let stdout = std::io::stdout().into_raw_mode()?;
-    let stdout = MouseTerminal::from(stdout);
-    let mut stdout = AlternateScreen::from(stdout);
+    let mut buffers = [
+        HashMap::<u16, String>::new(),
+        HashMap::<u16, String>::new(),
+    ];
+    let mut buffers_current = 0;
+
+    let mut stdout = {
+        let s = std::io::stdout().into_raw_mode()?;
+        let s = MouseTerminal::from(s);
+        AlternateScreen::from(s)
+    };
 
     let mut child = std::process::Command::new(opts.cmd)
         .args(opts.cmd_args)
@@ -92,18 +49,25 @@ fn main() -> Result<(), Box<dyn Error>> {
         .stderr(std::process::Stdio::piped())
         .spawn()?;
         
-    let host_stdin = host_read_stdin(stdin);
-    let child_stdout = child_read_stdout(child.stdout.take().unwrap());
-    let child_stderr = child_read_stderr(child.stderr.take().unwrap());
-    let child_stdin = child_write_stdin(child.stdin.take().unwrap());
+    let host_stdin = stdio::host_read_stdin(std::io::stdin());
+    let child_stdout = stdio::child_read_stdout(child.stdout.take().unwrap());
+    let child_stderr = stdio::child_read_stderr(child.stderr.take().unwrap());
+    let child_stdin = stdio::child_write_stdin(child.stdin.take().unwrap());
 
     writeln!(stdout, "{}", termion::clear::All)?;
     writeln!(stdout, "{}", termion::cursor::Hide)?;
 
-    let mut terminal_size = termion::terminal_size()?;
+    let mut terminal_size = (0, 0);
 
     loop {
         thread::sleep(std::time::Duration::from_millis(20));
+
+        let new_terminal_size = termion::terminal_size()?;
+        if terminal_size != new_terminal_size {
+            terminal_size = new_terminal_size;
+            let (w, h) = terminal_size;
+            child_stdin.send(format!("size:{},{}", w, h))?;
+        }
 
         if let Some(status) = child.try_wait()? {
             if status.success() {
@@ -113,20 +77,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         }
 
-        let new_terminal_size = termion::terminal_size()?;
-        if terminal_size != new_terminal_size {
-            terminal_size = new_terminal_size;
-            child_stdin.send(OutComms::TerminalSize(terminal_size))?;
-        }
-
         // collect terminal input (host_stdin)
         for hi in host_stdin.try_iter() {
             // relay terminal input to child (child_stdin)
-            match hi.map(|te| input::Event::from_termion_event(te)) {
-                Ok(maybe_ev) => {
-                    if let Some(ev) = maybe_ev {
-                        child_stdin.send(OutComms::InputEvent(ev))?;
-                    }
+            match hi {
+                Ok(e) => if let Some(s) = input::repr_event(&e) {
+                    child_stdin.send(s)?;
                 },
                 Err(e) => {
                     return Err(Box::new(e));
@@ -142,16 +98,33 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         
         // collect child comms from child stdout
-        for co in child_stdout.try_iter() {
-            match co {
-                Err(serde_err) => {
-                    child_stdin.send(OutComms::JsonError(format!("{}", serde_err)))?;
-                },
-                Ok(comm) => match comm {
-                    InComms::Draw(s) => {
-                        writeln!(stdout, "{}", s)?;
-                        writeln!(stdout, "{}", termion::cursor::Goto::default())?;
+        for s in child_stdout.try_iter() {
+            match s {
+                Ok(line) => {
+                    match line.as_str() {
+                        "reset" => {
+                            buffers[buffers_current].clear();
+                        },
+                        "flish" => {
+                            // todo: diff+flush
+                            // writeln!(stdout, "{}", termion::cursor::Goto::default())?;
+                            // stdout.flush()?;
+                        },
+                        _ => {
+                            if let Some(cap) = put_cmd_re.captures_iter(&line).next() {
+                                if let Some(line) = &cap[1].parse::<u16>().ok() {
+                                    buffers[buffers_current].insert(*line, cap[2].to_owned());
+                                }
+                            } else if let Some(cap) = erase_cmd_re.captures_iter(&line).next() {
+                                if let Some(line) = &cap[1].parse::<u16>().ok() {
+                                    buffers[buffers_current].remove(line);
+                                }
+                            }
+                        }
                     }
+                }
+                Err(e) => {
+                    return Err(Box::new(e));
                 }
             }
         }
