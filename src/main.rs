@@ -1,45 +1,43 @@
+mod opts;
 mod error;
 mod input;
 mod stdio;
+mod state;
 
-use error::ChildError;
-
+use std::fs::File;
+use std::io::{stdin, stdout};
 use std::error::Error;
-use std::io;
-use std::io::Write;
-use std::ffi::OsString;
 use std::thread;
-use std::collections::HashMap;
+use tui::Terminal;
+use tui::backend::TermionBackend;
 use clap::Clap;
-use regex::Regex;
 use termion::raw::IntoRawMode;
 use termion::input::MouseTerminal;
 use termion::screen::AlternateScreen;
-use unicode_segmentation::UnicodeSegmentation;
+use simplelog::*;
 
-#[derive(Clap)]
-struct Opts {
-    cmd: OsString,
-    cmd_args: Vec<OsString>
-}
+use crate::state::State;
+use crate::opts::Opts;
+use crate::error::ChildError;
 
 fn main() -> Result<(), Box<dyn Error>> {
 
-    let put_cmd_re = Regex::new(r"put:(\d+):(.*)").unwrap();
-    let erase_cmd_re = Regex::new(r"erase:(\d+)").unwrap();
+    CombinedLogger::init(
+        vec![
+            WriteLogger::new(LevelFilter::Info, Config::default(), File::create("log").unwrap()),
+        ]
+    ).unwrap();
 
     let opts = Opts::parse();
 
-    let mut buffers = [
-        HashMap::<u16, String>::new(),
-        HashMap::<u16, String>::new(),
-    ];
-    let mut buffers_current = 0;
+    let mut state = State::new();
 
-    let mut stdout = {
-        let s = std::io::stdout().into_raw_mode()?;
-        let s = MouseTerminal::from(s);
-        AlternateScreen::from(s)
+    let mut terminal = {
+        let stdout = stdout().into_raw_mode()?;
+        let stdout = MouseTerminal::from(stdout);
+        let stdout = AlternateScreen::from(stdout);
+        let backend = TermionBackend::new(stdout);
+        Terminal::new(backend)?
     };
 
     let mut child = std::process::Command::new(opts.cmd)
@@ -49,13 +47,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         .stderr(std::process::Stdio::piped())
         .spawn()?;
         
-    let host_stdin = stdio::host_read_stdin(std::io::stdin());
+    let host_stdin = stdio::host_read_stdin(stdin());
     let child_stdout = stdio::child_read_stdout(child.stdout.take().unwrap());
     let child_stderr = stdio::child_read_stderr(child.stderr.take().unwrap());
     let child_stdin = stdio::child_write_stdin(child.stdin.take().unwrap());
-
-    writeln!(stdout, "{}", termion::clear::All)?;
-    writeln!(stdout, "{}", termion::cursor::Hide)?;
 
     let mut terminal_size = (0, 0);
 
@@ -91,7 +86,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
 
         // collect child stderr
-        let child_errs = child_stderr.try_iter().collect::<Result<Vec<_>, io::Error>>()?;
+        let child_errs = child_stderr.try_iter().collect::<Result<Vec<_>, std::io::Error>>()?;
         if !child_errs.is_empty() {
             // gracefully fail if there were lines in child stderr
             return Err(Box::new(ChildError::Stderr(child_errs)));
@@ -101,33 +96,21 @@ fn main() -> Result<(), Box<dyn Error>> {
         for s in child_stdout.try_iter() {
             match s {
                 Ok(line) => {
-                    match line.as_str() {
-                        "reset" => {
-                            buffers[buffers_current].clear();
-                        },
-                        "flish" => {
-                            // todo: diff+flush
-                            // writeln!(stdout, "{}", termion::cursor::Goto::default())?;
-                            // stdout.flush()?;
-                        },
-                        _ => {
-                            if let Some(cap) = put_cmd_re.captures_iter(&line).next() {
-                                if let Some(line) = &cap[1].parse::<u16>().ok() {
-                                    buffers[buffers_current].insert(*line, cap[2].to_owned());
-                                }
-                            } else if let Some(cap) = erase_cmd_re.captures_iter(&line).next() {
-                                if let Some(line) = &cap[1].parse::<u16>().ok() {
-                                    buffers[buffers_current].remove(line);
-                                }
-                            }
-                        }
-                    }
+                    state.add_string(line);
+                    state.frame();
+                    // if line.starts_with(">") {
+                    //     state.add_string(line[1..].to_string());
+                    // } else if line == "frame" {
+                    //     state.frame();
+                    // }
                 }
                 Err(e) => {
                     return Err(Box::new(e));
                 }
             }
         }
+
+        state.render(&mut terminal)?;
     }
 
 }
