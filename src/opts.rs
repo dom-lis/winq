@@ -1,7 +1,7 @@
-use clap::Clap;
+use clap::Parser;
 use std::ffi::OsString;
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct Opts {
     pub cmd: OsString,
     pub cmd_args: Vec<OsString>

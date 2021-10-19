@@ -1,22 +1,23 @@
+mod aux;
 mod opts;
 mod error;
 mod input;
 mod stdio;
-mod state;
 
+use tui::style::Style;
 use std::fs::File;
 use std::io::{stdin, stdout};
 use std::error::Error;
 use std::thread;
+use aux::parse_color;
 use tui::Terminal;
 use tui::backend::TermionBackend;
-use clap::Clap;
+use clap::Parser;
 use termion::raw::IntoRawMode;
 use termion::input::MouseTerminal;
 use termion::screen::AlternateScreen;
-use simplelog::*;
+use simplelog::{CombinedLogger, WriteLogger, LevelFilter};
 
-use crate::state::State;
 use crate::opts::Opts;
 use crate::error::ChildError;
 
@@ -24,13 +25,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     CombinedLogger::init(
         vec![
-            WriteLogger::new(LevelFilter::Info, Config::default(), File::create("log").unwrap()),
+            WriteLogger::new(LevelFilter::Info, simplelog::Config::default(), File::create("log").unwrap()),
         ]
     ).unwrap();
 
     let opts = Opts::parse();
-
-    let mut state = State::new();
 
     let mut terminal = {
         let stdout = stdout().into_raw_mode()?;
@@ -53,6 +52,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let child_stdin = stdio::child_write_stdin(child.stdin.take().unwrap());
 
     let mut terminal_size = (0, 0);
+    let mut labels: Vec<(u16, u16, String, Style)> = Vec::new();
+    let mut flushed_labels: Vec<(u16, u16, String, Style)>;
+    let mut flush: bool = false;
 
     loop {
         thread::sleep(std::time::Duration::from_millis(20));
@@ -96,13 +98,23 @@ fn main() -> Result<(), Box<dyn Error>> {
         for s in child_stdout.try_iter() {
             match s {
                 Ok(line) => {
-                    state.add_string(line);
-                    state.frame();
-                    // if line.starts_with(">") {
-                    //     state.add_string(line[1..].to_string());
-                    // } else if line == "frame" {
-                    //     state.frame();
-                    // }
+                    let tokens = line.split("\t").collect::<Vec<_>>();
+                    match tokens.get(0) {
+                        Some(&"flush") => {
+                            flush = true;
+                        }
+                        Some(&"print") => {
+                            let x = tokens.get(1).map(|s| s.parse::<u16>());
+                            let y = tokens.get(2).map(|s| s.parse::<u16>());
+                            let text = tokens.get(3);
+                            let color = tokens.get(4).map(|s| parse_color(s));
+                            if let (Some(Ok(x)), Some(Ok(y)), Some(text), Some(Ok(color))) = (x, y, text, color) {
+                                labels.push((x, y, text.to_string(), Style::default().fg(color)));
+                            }
+                        }
+                        Some(_) => {}
+                        None => {}
+                    }
                 }
                 Err(e) => {
                     return Err(Box::new(e));
@@ -110,7 +122,20 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         }
 
-        state.render(&mut terminal)?;
+        if flush {
+            flush = false;
+            flushed_labels = labels;
+            labels = Vec::new();
+
+            let b = terminal.current_buffer_mut();
+
+            for (x, y, string, style) in &flushed_labels {
+                b.set_string(*x, *y, string, *style);
+            }
+
+            // ugly hack in order to avoid dealing with french lifetimes
+            terminal.draw(|_f| {})?;
+        }
     }
 
 }
