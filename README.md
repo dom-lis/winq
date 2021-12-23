@@ -20,7 +20,7 @@ accepts client application's output and displays it on the screen.
 ### Plans for future
 
 - [ ] Graceful shutdown (especially when receiving signals)
-- [ ] Colors
+- [x] Colors
 - [x] Screen buffering/diffing (done by tui-rs)
 - [ ] Key codes (for clients to be able to recognise same key in different layouts)
 

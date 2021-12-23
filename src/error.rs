@@ -14,3 +14,16 @@ impl Display for ChildError {
 }
 
 impl Error for ChildError {}
+
+#[derive(Debug)]
+pub enum InternalError {
+    BadMode(String)
+}
+
+impl Display for InternalError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), FmtError> {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl Error for InternalError {}

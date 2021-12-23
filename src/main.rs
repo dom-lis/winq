@@ -3,13 +3,13 @@ mod opts;
 mod error;
 mod input;
 mod stdio;
+mod mode;
+mod state;
 
-use tui::style::Style;
 use std::fs::File;
 use std::io::{stdin, stdout};
 use std::error::Error;
 use std::thread;
-use aux::parse_color;
 use tui::Terminal;
 use tui::backend::TermionBackend;
 use clap::Parser;
@@ -18,8 +18,11 @@ use termion::input::MouseTerminal;
 use termion::screen::AlternateScreen;
 use simplelog::{CombinedLogger, WriteLogger, LevelFilter};
 
+// use crate::aux::parse_color;
+use crate::mode::Mode;
 use crate::opts::Opts;
 use crate::error::ChildError;
+use crate::state::State;
 
 fn main() -> Result<(), Box<dyn Error>> {
 
@@ -52,10 +55,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let child_stdin = stdio::child_write_stdin(child.stdin.take().unwrap());
 
     let mut terminal_size = (0, 0);
-    let mut labels: Vec<(u16, u16, String, Style)> = Vec::new();
-    let mut flushed_labels: Vec<(u16, u16, String, Style)>;
     let mut flush: bool = false;
 
+    let mut mode: Mode = Mode::Text;
+    let mut state: State = State::default();
+    let mut flushed_state: State;
+ 
     loop {
         thread::sleep(std::time::Duration::from_millis(20));
 
@@ -98,22 +103,30 @@ fn main() -> Result<(), Box<dyn Error>> {
         for s in child_stdout.try_iter() {
             match s {
                 Ok(line) => {
-                    let tokens = line.split("\t").collect::<Vec<_>>();
-                    match tokens.get(0) {
-                        Some(&"flush") => {
-                            flush = true;
-                        }
-                        Some(&"print") => {
-                            let x = tokens.get(1).map(|s| s.parse::<u16>());
-                            let y = tokens.get(2).map(|s| s.parse::<u16>());
-                            let text = tokens.get(3);
-                            let color = tokens.get(4).map(|s| parse_color(s));
-                            if let (Some(Ok(x)), Some(Ok(y)), Some(text), Some(Ok(color))) = (x, y, text, color) {
-                                labels.push((x, y, text.to_string(), Style::default().fg(color)));
+                    if line.chars().next() == Some('\t') {
+                        match line.as_str() {
+                            "\tflush" => {
+                                mode = Mode::Text;
+                                flush = true;
+                            },
+                            "\ttext" => {
+                                mode = Mode::Text;
+                            },
+                            "\tfg" => {
+                                mode = Mode::Fg;
+                            },
+                            "\tbg" => {
+                                mode = Mode::Bg;
+                            }
+                            "\tstyle" => {
+                                mode = Mode::Style;
+                            },
+                            _ => {
+                                return Err(Box::new(error::InternalError::BadMode(line)))
                             }
                         }
-                        Some(_) => {}
-                        None => {}
+                    } else {
+                        state.push(mode, line);
                     }
                 }
                 Err(e) => {
@@ -124,13 +137,19 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         if flush {
             flush = false;
-            flushed_labels = labels;
-            labels = Vec::new();
-
+            flushed_state = state;
+            state = State::default();
+            mode = Mode::Text;
+            
             let b = terminal.current_buffer_mut();
 
-            for (x, y, string, style) in &flushed_labels {
-                b.set_string(*x, *y, string, *style);
+            let (w, h) = terminal_size;
+            for x in 0..w {
+                for y in 0..h{
+                    let string = flushed_state.get_string(x as usize, y as usize);
+                    let style = flushed_state.get_style(x as usize, y as usize);
+                    b.set_string(x, y, string, style);
+                }
             }
 
             // ugly hack in order to avoid dealing with french lifetimes
