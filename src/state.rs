@@ -1,7 +1,9 @@
 use tui::style::{Color, Style, Modifier};
+use tui::text::{Spans, Span};
 use crate::aux::parse_color;
 use crate::mode::Mode;
 
+#[derive(Debug)]
 pub struct State {
     text: Vec<String>,
     fg: Vec<String>,
@@ -60,6 +62,13 @@ impl State {
             .fg(self.get_fg(x, y))
             .bg(self.get_bg(x, y))
             .add_modifier(self.get_mod(x, y))
+    }
+    
+    pub fn as_spans(&self, w: usize, h: usize) -> Vec<Spans> {
+        (0..h).map(|y| {
+            let spans: Vec<Span> = (0..w).map(|x| Span::styled(self.get_string(x, y), self.get_style(x, y))).collect::<_>();
+            Spans::from(spans)
+        }).collect::<_>()
     }
 }
 

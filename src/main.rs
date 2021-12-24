@@ -12,11 +12,13 @@ use std::error::Error;
 use std::thread;
 use tui::Terminal;
 use tui::backend::TermionBackend;
+use tui::widgets::Paragraph;
 use clap::Parser;
 use termion::raw::IntoRawMode;
 use termion::input::MouseTerminal;
 use termion::screen::AlternateScreen;
 use simplelog::{CombinedLogger, WriteLogger, LevelFilter};
+use log::info;
 
 // use crate::aux::parse_color;
 use crate::mode::Mode;
@@ -141,19 +143,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             state = State::default();
             mode = Mode::Text;
             
-            let b = terminal.current_buffer_mut();
-
-            let (w, h) = terminal_size;
-            for x in 0..w {
-                for y in 0..h{
-                    let string = flushed_state.get_string(x as usize, y as usize);
-                    let style = flushed_state.get_style(x as usize, y as usize);
-                    b.set_string(x, y, string, style);
-                }
-            }
-
-            // ugly hack in order to avoid dealing with french lifetimes
-            terminal.draw(|_f| {})?;
+            terminal.draw(|f| {
+                let size = f.size();
+                let view = Paragraph::new(flushed_state.as_spans(size.width as usize, size.height as usize));
+                f.render_widget(view, size);
+            })?;
         }
     }
 
