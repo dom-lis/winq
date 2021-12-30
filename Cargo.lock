@@ -333,6 +333,7 @@ dependencies = [
  "simplelog",
  "termion",
  "tui",
+ "unicode-segmentation",
 ]
 
 [[package]]

@@ -12,15 +12,12 @@ use std::error::Error;
 use std::thread;
 use tui::Terminal;
 use tui::backend::TermionBackend;
-use tui::widgets::Paragraph;
 use clap::Parser;
 use termion::raw::IntoRawMode;
 use termion::input::MouseTerminal;
 use termion::screen::AlternateScreen;
 use simplelog::{CombinedLogger, WriteLogger, LevelFilter};
-use log::info;
 
-// use crate::aux::parse_color;
 use crate::mode::Mode;
 use crate::opts::Opts;
 use crate::error::ChildError;
@@ -57,13 +54,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let child_stdin = stdio::child_write_stdin(child.stdin.take().unwrap());
 
     let mut terminal_size = (0, 0);
-    let mut flush: bool = false;
 
     let mut mode: Mode = Mode::Text;
     let mut state: State = State::default();
-    let mut flushed_state: State;
- 
+    let mut flushed_state: Option<State> = None;
+
     loop {
+        // throttling it so it won't busy-wait 100% of cpu
         thread::sleep(std::time::Duration::from_millis(20));
 
         let new_terminal_size = termion::terminal_size()?;
@@ -109,7 +106,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                         match line.as_str() {
                             "\tflush" => {
                                 mode = Mode::Text;
-                                flush = true;
+                                flushed_state = Some(state);
+                                state = State::default();
                             },
                             "\ttext" => {
                                 mode = Mode::Text;
@@ -137,17 +135,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         }
 
-        if flush {
-            flush = false;
-            flushed_state = state;
-            state = State::default();
-            mode = Mode::Text;
-            
-            terminal.draw(|f| {
-                let size = f.size();
-                let view = Paragraph::new(flushed_state.as_spans(size.width as usize, size.height as usize));
-                f.render_widget(view, size);
-            })?;
+        if let Some(draw_state) = flushed_state.take() {
+            terminal.draw(|f| f.render_widget(draw_state, f.size()))?;
         }
     }
 

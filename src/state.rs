@@ -1,5 +1,9 @@
 use tui::style::{Color, Style, Modifier};
-use tui::text::{Spans, Span};
+use tui::layout::Rect;
+use tui::buffer::Buffer;
+use tui::widgets::Widget;
+use unicode_segmentation::UnicodeSegmentation;
+
 use crate::aux::parse_color;
 use crate::mode::Mode;
 
@@ -33,10 +37,6 @@ impl State {
         }
     }
     
-    pub fn get_string(&self, x: usize, y: usize) -> String {
-        get_at(&self.text, x, y)
-    }
-    
     pub fn get_fg(&self, x: usize, y: usize) -> Color {
         let fg = get_at(&self.fg, x, y);
         parse_color(&fg)
@@ -63,12 +63,18 @@ impl State {
             .bg(self.get_bg(x, y))
             .add_modifier(self.get_mod(x, y))
     }
-    
-    pub fn as_spans(&self, w: usize, h: usize) -> Vec<Spans> {
-        (0..h).map(|y| {
-            let spans: Vec<Span> = (0..w).map(|x| Span::styled(self.get_string(x, y), self.get_style(x, y))).collect::<_>();
-            Spans::from(spans)
-        }).collect::<_>()
+}
+
+impl Widget for State {
+    fn render(self, rect: Rect, buf: &mut Buffer) {
+        for (y, line) in self.text.iter().take(rect.height as usize).enumerate() {
+            for (x, symbol) in line.graphemes(true).take(rect.width as usize).enumerate() {
+                let style = self.get_style(x, y);
+                buf.get_mut(x as u16 + rect.left(), y as u16 + rect.top())
+                    .set_symbol(symbol)
+                    .set_style(style);
+            }
+        }
     }
 }
 
