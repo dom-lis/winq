@@ -1,7 +1,9 @@
+mod repr;
+
 use std::io::{Read, Write, BufRead, BufReader};
 use std::error::Error;
 
-use crate::comms::{InComm, OutComm, BadComm};
+use crate::comms::{InComm, OutComm, BadComm, Size, Event};
 
 type E = Box<dyn Error + Send + Sync>;
 type R = Result<InComm, E>;
@@ -63,7 +65,13 @@ pub fn read_stdout(stdout: Box<dyn Read>) -> Box<dyn Iterator<Item = R>> {
 }
 
 pub fn write_stdin(stdin: &mut dyn Write, comm: OutComm) -> Result<(), E> {
-    match comm {
-        _ => unimplemented!()
+    let line = match comm {
+        Size((x, y)) => Some(format!("Size:{},{}", x, y)),
+        Event(e) => repr::repr_event(&e),
+        _ => None,
+    };
+    match line {
+        Some(line) => writeln!(stdin, "{}", line),
+        None => Ok(()),
     }
 }

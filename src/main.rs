@@ -19,6 +19,7 @@ use crate::state::State;
 fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let opts = Opts::parse();
+    let proto = opts.protocol();
     
     if let Some(log) = opts.log {
         use log::LevelFilter;
@@ -27,18 +28,21 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         WriteLogger::init(LevelFilter::max(), Config::default(), File::create(log).unwrap()).unwrap()
     }
     
-    let (out_tx, in_rx) = {
+    let mut thread_handles = vec![];
+    
+    let (out_tx, in_rx, mut comms_handles) = {
         let cmd = opts.cmd;
         let cmd_args = opts.cmd_args;
-        let json = opts.json;
         if let Some(cmd) = cmd {
-            comms::stdio::open_comms(cmd, &cmd_args, json)
+            comms::stdio::open_comms(cmd, &cmd_args, proto)
         } else if let Some(nng) = opts.nng {
-            comms::nng::open_comms(nng, json)
+            comms::nng::open_comms(nng, proto)
         } else {
             unimplemented!()
         }
     }?;
+
+    thread_handles.append(&mut comms_handles);
 
     let mut terminal = {
         use termion::raw::IntoRawMode;
@@ -56,7 +60,7 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     
     let (state_tx, state_rx) = channel::<State>();
 
-    let size_hndl = thread::spawn::<_, R>({
+    thread_handles.push(thread::spawn::<_, R>({
         use std::time::Duration;
         use comms::Size;
         type E = Box<dyn Error + Send + Sync>;
@@ -74,9 +78,9 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
             }
             Ok(())
         }
-    });
+    }));
     
-    let ev_hndl = thread::spawn::<_, R>({
+    thread_handles.push(thread::spawn::<_, R>({
         use termion::input::TermRead;
         use comms::Event;
         type E = Box<dyn Error + Send + Sync>;
@@ -94,9 +98,9 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
             }
             Ok(())
         }
-    });
+    }));
     
-    let inc_hndl = thread::spawn::<_, R>({
+    thread_handles.push(thread::spawn::<_, R>({
         use comms::{Quit, BadComm, State};
         type E = Box<dyn Error + Send + Sync>;
         move || -> Result<(), E> {
@@ -109,9 +113,9 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
             }
             Ok(())
         }
-    });
+    }));
     
-    let draw_hndl = thread::spawn::<_, R>({
+    thread_handles.push(thread::spawn::<_, R>({
         type E = Box<dyn Error + Send + Sync>;
         move || -> Result<(), E> {
             for s in state_rx {
@@ -119,12 +123,12 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
             }
             Ok(())
         }
-    });
+    }));
     
-   size_hndl.join().unwrap()?;
-   ev_hndl.join().unwrap()?;
-   inc_hndl.join().unwrap()?;
-   draw_hndl.join().unwrap()?;
-   Ok(())
+    for h in thread_handles {
+        h.join().unwrap()?;
+    }
+    
+    Ok(())
 
 }

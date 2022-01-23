@@ -1,6 +1,12 @@
 use clap::Parser;
 use std::ffi::OsString;
 
+#[derive(Copy, Clone)]
+pub enum Protocol {
+    Simple,
+    Json,
+}
+
 #[derive(Parser)]
 #[clap(name="tulip", about="terminal text-user interface proxy (or client)")]
 pub struct Opts {
@@ -14,4 +20,14 @@ pub struct Opts {
     pub cmd: Option<OsString>,
     #[clap(requires="cmd", about="arguments for <CMD>")]
     pub cmd_args: Vec<OsString>,
+}
+
+impl Opts {
+    pub fn protocol(&self) -> Protocol {
+        if self.json {
+            Protocol::Json
+        } else {
+            Protocol::Simple
+        }
+    }
 }
