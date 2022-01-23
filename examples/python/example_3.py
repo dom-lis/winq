@@ -1,4 +1,4 @@
-from _cmn import parse_size, flush_screen
+from cmn import parse_size, flush_screen
 from collections import deque
 from random import randrange
 

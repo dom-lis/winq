@@ -1,4 +1,4 @@
-from _cmn import flush_line
+from cmn import flush_line
 
 while True:
     i = input()
