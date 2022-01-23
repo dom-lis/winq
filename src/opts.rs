@@ -8,17 +8,17 @@ pub enum Protocol {
 }
 
 #[derive(Parser)]
-#[clap(name="tulip", about="terminal text-user interface proxy (or client)")]
+#[clap(name="tulip", help="terminal text-user interface proxy (or client)")]
 pub struct Opts {
-    #[clap(long, about="path to logfile")]
+    #[clap(long, help="path to logfile")]
     pub log: Option<OsString>,
-    #[clap(long, group="way", about="communicate via nng uri")]
+    #[clap(long, group="way", help="communicate via nng uri")]
     pub nng: Option<OsString>,
-    #[clap(long, group="protocol", about="use json for communcation")]
+    #[clap(long, group="protocol", help="use json for communcation")]
     pub json: bool,
-    #[clap(group="way", about="run this command as child proccess")]
+    #[clap(group="way", help="run this command as child proccess")]
     pub cmd: Option<OsString>,
-    #[clap(requires="cmd", about="arguments for <CMD>")]
+    #[clap(requires="cmd", help="arguments for <CMD>")]
     pub cmd_args: Vec<OsString>,
 }
 

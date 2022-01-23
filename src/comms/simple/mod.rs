@@ -65,13 +65,8 @@ pub fn read_stdout(stdout: Box<dyn Read>) -> Box<dyn Iterator<Item = R>> {
 }
 
 pub fn write_stdin(stdin: &mut dyn Write, comm: OutComm) -> Result<(), E> {
-    let line = match comm {
-        Size((x, y)) => Some(format!("Size:{},{}", x, y)),
-        Event(e) => repr::repr_event(&e),
-        _ => None,
-    };
-    match line {
-        Some(line) => writeln!(stdin, "{}", line),
-        None => Ok(()),
+    if let Some(line) = repr::repr_comm(&comm) {
+        writeln!(stdin, "{}", line)?; 
     }
+    Ok(())
 }
