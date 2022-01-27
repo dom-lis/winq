@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         WriteLogger::init(LevelFilter::max(), Config::default(), File::create(log).unwrap()).unwrap()
     }
     
-    let (tx, rx, comms_threads) = {
+    let (tx, rx) = {
         let cmd = opts.cmd;
         let cmd_args = opts.cmd_args;
         if let Some(cmd) = cmd {
@@ -42,10 +42,6 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         frontend::fltk::run(tx, rx)?;
     } else {
         frontend::tui::run(tx, rx)?;
-    }
-
-    for t in comms_threads {
-        t.join().unwrap()?;
     }
 
     Ok(())

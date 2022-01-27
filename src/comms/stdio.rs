@@ -1,6 +1,5 @@
 use std::io;
 use std::thread;
-use std::thread::JoinHandle;
 use std::sync::mpsc::{sync_channel, SyncSender, Receiver};
 use std::error::Error;
 
@@ -10,14 +9,12 @@ use crate::comms::{CHAN_BOUND, InComm, OutComm};
 
 type E = Box<dyn Error + Send + Sync>;
 type R = Result<(), E>;
-type Rc = Result<(SyncSender<OutComm>, Receiver<InComm>, Vec<JoinHandle<R>>), E>;
+type Rc = Result<(SyncSender<OutComm>, Receiver<InComm>), E>;
 
 pub fn open_comms(proto: Protocol) -> Rc {
     
-    let mut threads = vec![];
-
     let (in_tx, in_rx) = sync_channel(CHAN_BOUND);
-    threads.push(thread::spawn({
+    thread::spawn({
         move || -> R {
             let stdin = Box::new(io::stdin());
 
@@ -32,10 +29,10 @@ pub fn open_comms(proto: Protocol) -> Rc {
             }
             Ok(())
         }
-    }));
+    });
     
     let (out_tx, out_rx) = sync_channel(CHAN_BOUND);
-    threads.push(thread::spawn({
+    thread::spawn({
         move || -> R {
             let write = match proto {
                 Simple => crate::proto::simple::write,
@@ -47,7 +44,7 @@ pub fn open_comms(proto: Protocol) -> Rc {
             }
             Ok(())
         }
-    }));
+    });
 
-    Ok((out_tx, in_rx, threads))
+    Ok((out_tx, in_rx))
 }

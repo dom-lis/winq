@@ -11,7 +11,7 @@ use crate::comms::{CHAN_BOUND, InComm, OutComm};
 
 type E = Box<dyn Error + Send + Sync>;
 type R = Result<(), E>;
-type Rc = Result<(SyncSender<OutComm>, Receiver<InComm>, Vec<JoinHandle<R>>), E>;
+type Rc = Result<(SyncSender<OutComm>, Receiver<InComm>), E>;
 
 pub fn open_comms(cmd: OsString, args: &[OsString], proto: Protocol) -> Rc {
     let mut child = std::process::Command::new(cmd)
@@ -21,10 +21,8 @@ pub fn open_comms(cmd: OsString, args: &[OsString], proto: Protocol) -> Rc {
         .stderr(std::process::Stdio::piped())
         .spawn()?;
 
-    let mut threads = vec![];
-
     let (in_tx, in_rx) = sync_channel(CHAN_BOUND);
-    threads.push(thread::spawn({
+    thread::spawn({
         let stdout_err = io::Error::new(io::ErrorKind::Other, "can't take child stdout");
         let stdout = child.stdout.take().ok_or(stdout_err)?;
         let stdout = Box::new(stdout);
@@ -41,10 +39,10 @@ pub fn open_comms(cmd: OsString, args: &[OsString], proto: Protocol) -> Rc {
             // TODO: handle child status etc
             Ok(())
         }
-    }));
+    });
     
     let (out_tx, out_rx) = sync_channel(CHAN_BOUND);
-    threads.push(thread::spawn({
+    thread::spawn({
         let stdin_err = io::Error::new(io::ErrorKind::Other, "can't take child stdin");
         let stdin = child.stdin.take().ok_or(stdin_err)?;
         let mut stdin = Box::new(stdin);
@@ -58,7 +56,7 @@ pub fn open_comms(cmd: OsString, args: &[OsString], proto: Protocol) -> Rc {
             }
             Ok(())
         }
-    }));
+    });
     
-    Ok((out_tx, in_rx, threads))
+    Ok((out_tx, in_rx))
 }
