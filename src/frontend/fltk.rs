@@ -2,14 +2,12 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{SyncSender, Receiver};
 use std::error::Error;
 use std::convert::TryFrom;
-use clap::Parser;
 use fltk::prelude::*;
 use fltk::{app, draw};
 use fltk::app::App;
 use fltk::window::Window;
 use fltk::enums::{Font, FrameType, Color};
 
-use crate::Opts;
 use crate::event::{Event, Key, Mods};
 use crate::comms::{InComm, OutComm};
 use crate::state::State;
