@@ -7,7 +7,7 @@ use crate::comms::{InComm, OutComm, BadComm};
 type E = Box<dyn Error + Send + Sync>;
 type R = Result<InComm, E>;
 
-pub fn read_stdout(stdout: Box<dyn Read>) -> Box<dyn Iterator<Item=R>> {
+pub fn read(stdout: Box<dyn Read>) -> Box<dyn Iterator<Item=R>> {
     let stdout = BufReader::new(stdout);
     let iter = stdout
         .lines()
@@ -25,7 +25,7 @@ pub fn read_stdout(stdout: Box<dyn Read>) -> Box<dyn Iterator<Item=R>> {
     Box::new(iter)
 }
 
-pub fn write_stdin(stdin: &mut dyn Write, comm: OutComm) -> Result<(), E> {
+pub fn write(stdin: &mut dyn Write, comm: OutComm) -> Result<(), E> {
     let line = serde_json::to_string(&comm)?;
     writeln!(stdin, "{}", line)?;
     Ok(())

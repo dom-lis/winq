@@ -3,7 +3,7 @@ mod repr;
 use std::io::{Read, Write, BufRead, BufReader};
 use std::error::Error;
 
-use crate::comms::{InComm, OutComm, BadComm, Size, Event};
+use crate::comms::{InComm, OutComm, BadComm};
 
 type E = Box<dyn Error + Send + Sync>;
 type R = Result<InComm, E>;
@@ -16,7 +16,7 @@ pub enum Mode {
     Style,
 }
 
-pub fn read_stdout(stdout: Box<dyn Read>) -> Box<dyn Iterator<Item = R>> {
+pub fn read(stdout: Box<dyn Read>) -> Box<dyn Iterator<Item = R>> {
     use crate::state::State;
     let mut mode: Mode = Mode::Text;
     let mut state = State::default();
@@ -64,7 +64,7 @@ pub fn read_stdout(stdout: Box<dyn Read>) -> Box<dyn Iterator<Item = R>> {
     Box::new(iter)
 }
 
-pub fn write_stdin(stdin: &mut dyn Write, comm: OutComm) -> Result<(), E> {
+pub fn write(stdin: &mut dyn Write, comm: OutComm) -> Result<(), E> {
     if let Some(line) = repr::repr_comm(&comm) {
         writeln!(stdin, "{}", line)?; 
     }

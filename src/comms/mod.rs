@@ -1,7 +1,6 @@
-pub mod nng;
-pub mod json;
+pub mod child;
 pub mod stdio;
-pub mod simple;
+pub mod socket;
 
 use serde::{Serialize, Deserialize};
 
@@ -26,5 +25,3 @@ pub enum OutComm {
 }
 
 pub use OutComm::*;
-
-

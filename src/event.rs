@@ -1,10 +1,4 @@
 use serde::{Serialize, Deserialize};
-use termion::event::{
-    Key as TermionKey,
-    Event as TermionEvent,
-    MouseEvent as TermionMouseEvent,
-    MouseButton as TermionMouseButton,
-};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Mods {
@@ -32,24 +26,77 @@ impl Default for Mods {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum Key {
+    Button,
+    Backspace,
+    Tab,
+    IsoKey,
+    Enter,
+    Pause,
+    ScrollLock,
+    Esc,
+    Kana,
+    Eisu,
+    Yen,
+    JISUnderscore,
+    Home,
+    Left,
+    Up,
+    Right,
+    Down,
+    PageUp,
+    PageDown,
+    End,
+    Print,
+    Insert,
+    Menu,
+    Help,
+    NumLock,
+    KP,
+    KPEnter,
+    KPLast,
+    F1,
+    F2,
+    F3,
+    F4,
+    F5,
+    F6,
+    F7,
+    F8,
+    F9,
+    F10,
+    F11,
+    F12,
+    FLast,
+    ShiftL,
+    ShiftR,
+    Ctrl,
+    RCtrl,
+    CapsLock,
+    Meta,
+    RMeta,
+    Alt,
+    RAlt,
+    Delete,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Event {
-    KeyDown {
-        code: Option<i32>,
-        key: Option<String>,
-        text: Option<String>,
-        mods: Mods,
-    },
-    MouseButtonDown {
-        x: i32,
-        y: i32,
-        button: i32,
-    },
     MouseMove {
         x: i32,
         y: i32,
+    },
+    MouseDown {
+        x: i32,
+        y: i32,
         button: i32,
     },
-    MouseButtonUp {
+    MouseDrag {
+        x: i32,
+        y: i32,
+        button: i32,
+    },
+    MouseUp {
         x: i32,
         y: i32,
         button: i32,
@@ -58,151 +105,36 @@ pub enum Event {
         dx: i32,
         dy: i32,
     },
-}
-
-impl Event {
-    pub fn interp_termion_event(te: TermionEvent) -> Option<Event> {
-        match te {
-            TermionEvent::Key(k) => Event::interp_termion_key(k),
-            TermionEvent::Mouse(m) => Event::interp_termion_mouse(m),
-            _ => None,
-        }
-    }
-
-    pub fn interp_termion_key(tk: TermionKey) -> Option<Event> {
-        match tk {
-            TermionKey::Backspace => Some(Event::KeyDown {
-                code: None,
-                key: Some("Backspace".to_string()),
-                text: None,
-                mods: Mods::default(),
-            }),
-            TermionKey::Left => Some(Event::KeyDown {
-                code: None,
-                key: Some("Left".to_string()),
-                text: None,
-                mods: Mods::default(),
-            }),
-            TermionKey::Right => Some(Event::KeyDown {
-                code: None,
-                key: Some("Right".to_string()),
-                text: None,
-                mods: Mods::default(),
-            }),
-            TermionKey::Up => Some(Event::KeyDown {
-                code: None,
-                key: Some("Up".to_string()),
-                text: None,
-                mods: Mods::default(),
-            }),
-            TermionKey::Down => Some(Event::KeyDown {
-                code: None,
-                key: Some("Down".to_string()),
-                text: None,
-                mods: Mods::default(),
-            }),
-            TermionKey::Home => Some(Event::KeyDown {
-                code: None,
-                key: Some("Home".to_string()),
-                text: None,
-                mods: Mods::default(),
-            }),
-            TermionKey::End => Some(Event::KeyDown {
-                code: None,
-                key: Some("End".to_string()),
-                text: None,
-                mods: Mods::default(),
-            }),
-            TermionKey::PageUp => Some(Event::KeyDown {
-                code: None,
-                key: Some("PageUp".to_string()),
-                text: None,
-                mods: Mods::default(),
-            }),
-            TermionKey::PageDown => Some(Event::KeyDown {
-                code: None,
-                key: Some("PageDown".to_string()),
-                text: None,
-                mods: Mods::default(),
-            }),
-            TermionKey::BackTab => Some(Event::KeyDown {
-                code: None,
-                key: Some("BackTab".to_string()),
-                text: None,
-                mods: Mods::default(),
-            }),
-            TermionKey::Delete => Some(Event::KeyDown {
-                code: None,
-                key: Some("Delete".to_string()),
-                text: None,
-                mods: Mods::default(),
-            }),
-            TermionKey::Insert => Some(Event::KeyDown {
-                code: None,
-                key: Some("Insert".to_string()),
-                text: None,
-                mods: Mods::default(),
-            }),
-            TermionKey::F(n) => Some(Event::KeyDown {
-                code: None,
-                key: Some(format!("F{}", n)),
-                text: None,
-                mods: Mods::default(),
-            }),
-            TermionKey::Char(c) => Some(Event::KeyDown {
-                code: None,
-                key: Some("Button".to_string()),
-                text: Some(c.to_string()),
-                mods: Mods { shift: c.is_uppercase(), ..Mods::default() },
-            }),
-            TermionKey::Alt(c) => Some(Event::KeyDown {
-                code: None,
-                key: None,
-                text: Some(c.to_string()),
-                mods: Mods { alt: true, ..Mods::default() }
-            }),
-            TermionKey::Ctrl(c) => Some(Event::KeyDown {
-                code: None,
-                key: None,
-                text: Some(c.to_string()),
-                mods: Mods { ctrl: true, ..Mods::default() },
-            }),
-            TermionKey::Esc => Some(Event::KeyDown {
-                code: None,
-                key: Some("Esc".to_string()),
-                text: None,
-                mods: Mods::default(),
-            }),
-            _ => None,
-        }
-    }
-    
-    pub fn interp_termion_mouse(tme: TermionMouseEvent) -> Option<Event> {
-        match tme {
-            TermionMouseEvent::Press(m, x, y) => match m {
-                TermionMouseButton::WheelDown => Some(Event::MouseWheel { dx: 0, dy: 1 }),
-                TermionMouseButton::WheelUp => Some(Event::MouseWheel { dx: 0, dy: -1 }),
-                _ => Some(Event::MouseButtonDown {
-                    x: x as i32,
-                    y: y as i32,
-                    button: match m {
-                        TermionMouseButton::Left => 1,
-                        TermionMouseButton::Right => 2,
-                        TermionMouseButton::Middle => 3,
-                        _ => 0,
-                    }
-                }),
-            },
-            TermionMouseEvent::Hold(x, y) => Some(Event::MouseMove {
-                x: x as i32,
-                y: y as i32,
-                button: 0,
-            }),
-            TermionMouseEvent::Release(x, y) => Some(Event::MouseButtonUp {
-                x: x as i32,
-                y: y as i32,
-                button: 0,
-            }),
-        }
-    }
+    KeyDown {
+        code: Option<i32>,
+        key: Option<Key>,
+        text: Option<String>,
+        mods: Mods,
+    },
+    KeyUp {
+        code: Option<i32>,
+        key: Option<Key>,
+        text: Option<String>,
+        mods: Mods,
+    },
+    Close,
+    Deactivate,
+    Activate,
+    Hide,
+    Show,
+    Paste,
+    SelectionClear,
+    DndEnter,
+    DndDrag,
+    DndLeave,
+    DndRelease,
+    ScreenConfigChanged,
+    Fullscreen,
+    ZoomGesture,
+    ZoomEvent,
+    Resize,
+    Enter,
+    Leave,
+    Focus,
+    Unfocus,
 }
