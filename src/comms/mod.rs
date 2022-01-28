@@ -1,5 +1,6 @@
 pub mod child;
 pub mod stdio;
+pub mod socket;
 
 use serde::{Serialize, Deserialize};
 

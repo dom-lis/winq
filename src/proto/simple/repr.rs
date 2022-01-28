@@ -29,7 +29,7 @@ pub fn repr_mods(mods: &Mods) -> String {
 
 pub fn repr_key(key: &Key) -> String {
     match key {
-        Key::Button => "Button".to_string(),
+        Key::Button(c) => c.map(|c| c.to_string()).unwrap_or("".to_string()),
         Key::Backspace => "Backspace".to_string(),
         Key::Tab => "Tab".to_string(),
         Key::IsoKey => "IsoKey".to_string(),

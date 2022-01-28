@@ -31,8 +31,8 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
             comms::child::open_comms(cmd, &cmd_args, proto)
         } else if opts.inverse {
             comms::stdio::open_comms(proto)
-        } else if let Some(_socket) = opts.socket {
-            unimplemented!()
+        } else if let Some(socket) = opts.socket {
+            comms::socket::open_comms(socket, proto)
         } else {
             unreachable!()
         }

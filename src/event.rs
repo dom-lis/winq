@@ -27,7 +27,7 @@ impl Default for Mods {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Key {
-    Button,
+    Button(Option<char>),
     Backspace,
     Tab,
     IsoKey,

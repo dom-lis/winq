@@ -8,6 +8,7 @@ use fltk::app::App;
 use fltk::window::Window;
 use fltk::enums::{Font, FrameType, Color};
 
+use crate::aux::parse_key;
 use crate::event::{Event, Key, Mods};
 use crate::comms::{InComm, OutComm};
 use crate::state::State;
@@ -34,7 +35,6 @@ impl TryFrom<FltkKey> for Key {
     
     fn try_from(fk: FltkKey) -> Result<Key, Self::Error> {
         match fk {
-            FltkKey::Button => Ok(Key::Button),
             FltkKey::BackSpace => Ok(Key::Backspace),
             FltkKey::Tab => Ok(Key::Tab),
             FltkKey::IsoKey => Ok(Key::IsoKey),
@@ -85,7 +85,7 @@ impl TryFrom<FltkKey> for Key {
             FltkKey::AltL => Ok(Key::Alt),
             FltkKey::AltR => Ok(Key::RAlt),
             FltkKey::Delete => Ok(Key::Delete),
-            _ => Err(()),
+            _ => Ok(Key::Button(parse_key(fk.bits() as u8))),
         }
     }
 }

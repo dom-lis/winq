@@ -5,16 +5,17 @@ use std::error::Error;
 use std::thread;
 use tui::Terminal;
 use tui::backend::TermionBackend;
-use crate::state::State;
-use crate::comms;
-use crate::comms::{InComm, OutComm};
-use crate::event::{Event, Key, Mods};
 use termion::event::{
     Key as TermionKey,
     Event as TermionEvent,
     MouseEvent as TermionMouseEvent,
     MouseButton as TermionMouseButton,
 };
+use crate::state::State;
+use crate::comms;
+use crate::comms::{InComm, OutComm};
+use crate::event::{Event, Key, Mods};
+use crate::aux::parse_key;
 
 impl TryFrom<TermionKey> for Event {
     type Error = ();
@@ -112,7 +113,7 @@ impl TryFrom<TermionKey> for Event {
             }),
             TermionKey::Char(c) => Ok(Event::KeyDown {
                 code: None,
-                key: Some(Key::Button),
+                key: Some(Key::Button(parse_key(c.to_ascii_lowercase() as u8))),
                 text: Some(c.to_string()),
                 mods: Mods { shift: c.is_uppercase(), ..Mods::default() },
             }),
