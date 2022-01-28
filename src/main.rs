@@ -28,6 +28,8 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         let cmd = opts.cmd;
         let cmd_args = opts.cmd_args;
         if let Some(cmd) = cmd {
+            let cmd = cmd.into();
+            let cmd_args = cmd_args.iter().map(|s| s.into()).collect::<Vec<_>>();
             comms::child::open_comms(cmd, &cmd_args, proto)
         } else if opts.inverse {
             comms::stdio::open_comms(proto)

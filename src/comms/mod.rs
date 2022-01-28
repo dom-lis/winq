@@ -1,3 +1,4 @@
+pub mod tcp;
 pub mod child;
 pub mod stdio;
 pub mod socket;

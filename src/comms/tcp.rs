@@ -1,4 +1,4 @@
-use std::os::unix::net::UnixStream;
+use std::net::TcpStream;
 use std::thread;
 use std::sync::mpsc::{sync_channel, SyncSender, Receiver};
 use std::error::Error;
@@ -12,7 +12,7 @@ type R = Result<(), E>;
 type Rc = Result<(SyncSender<OutComm>, Receiver<InComm>), E>;
 
 pub fn open_comms(uri: String, proto: Protocol) -> Rc {
-    let socket = UnixStream::connect(uri)?;
+    let socket = TcpStream::connect(uri)?;
     
     let (in_tx, in_rx) = sync_channel(CHAN_BOUND);
     thread::spawn({
