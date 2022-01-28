@@ -1,7 +1,6 @@
 use std::io;
 use std::ffi::OsString;
 use std::thread;
-use std::thread::JoinHandle;
 use std::sync::mpsc::{sync_channel, SyncSender, Receiver};
 use std::error::Error;
 
