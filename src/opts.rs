@@ -7,16 +7,16 @@ pub struct Opts {
     #[clap(long, help="path to logfile")]
     pub log: Option<String>,
 
-    #[clap(short, long, group="way", help="communicate via socket")]
+    #[clap(short, long, group="transport", help="communicate via socket")]
     pub socket: Option<String>,
     
-    #[clap(short, long, group="way", help="communicate via tcp-stream")]
+    #[clap(short, long, group="transport", help="communicate via tcp-stream")]
     pub tcp: Option<String>,
 
-    #[clap(short, long, group="protocol", help="use json for communcation")]
+    #[clap(short, long, group="format", help="use json for communcation")]
     pub json: bool,
 
-    #[clap(group="way", help="run this command as child proccess")]
+    #[clap(group="transport", help="run this command as child proccess")]
     pub cmd: Option<String>,
 
     #[clap(requires="cmd", help="arguments for <CMD>")]
@@ -25,6 +25,6 @@ pub struct Opts {
     #[clap(short, long)]
     pub graphical: bool,
 
-    #[clap(short, long, requires="graphical", conflicts_with_all=&["way", "cmd-args"], help="send user events to stdout and accept updates on stdin")]
+    #[clap(short, long, requires="graphical", conflicts_with_all=&["transport", "cmd-args"], help="send user events to stdout and accept updates on stdin")]
     pub inverse: bool,
 }
