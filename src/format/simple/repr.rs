@@ -1,4 +1,4 @@
-use crate::comms::{OutComm};
+use crate::transport::{OutComm};
 use crate::event::{Event, Key, Mods};
 
 pub fn repr_mods(mods: &Mods) -> String {
@@ -136,7 +136,7 @@ pub fn repr_event(ev: &Event) -> Option<String> {
 }
 
 pub fn repr_comm(comm: &OutComm) -> Option<String> {
-    use crate::comms::OutComm::*;
+    use crate::transport::OutComm::*;
 
     match comm {
         Size((x, y)) => Some(format!("Size:{},{}", x, y)),

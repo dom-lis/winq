@@ -4,7 +4,6 @@ pub mod stdio;
 pub mod socket;
 
 use serde::{Serialize, Deserialize};
-
 use crate::state::State;
 use crate::event::Event;
 

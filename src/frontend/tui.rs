@@ -12,8 +12,8 @@ use termion::event::{
     MouseButton as TermionMouseButton,
 };
 use crate::state::State;
-use crate::comms;
-use crate::comms::{InComm, OutComm};
+use crate::transport;
+use crate::transport::{InComm, OutComm};
 use crate::event::{Event, Key, Mods};
 use crate::utils::parse_key;
 
@@ -213,7 +213,7 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
 
     thread_handles.push(thread::spawn::<_, R>({
         use std::time::Duration;
-        use comms::Size;
+        use transport::Size;
         type E = Box<dyn Error + Send + Sync>;
         let tx = tx.clone();
         move || -> Result<(), E> {
@@ -233,7 +233,7 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
     
     thread_handles.push(thread::spawn::<_, R>({
         use termion::input::TermRead;
-        use comms::Event;
+        use transport::Event;
         type E = Box<dyn Error + Send + Sync>;
         type R = Result<(), E>;
         let tx = tx.clone();
@@ -252,7 +252,7 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
     }));
     
     thread_handles.push(thread::spawn::<_, R>({
-        use comms::{Quit, BadComm, State};
+        use transport::{Quit, BadComm, State};
         type E = Box<dyn Error + Send + Sync>;
         move || -> Result<(), E> {
             for inc in rx {

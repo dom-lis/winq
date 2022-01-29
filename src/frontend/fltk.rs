@@ -10,7 +10,7 @@ use fltk::enums::{Font, FrameType, Color};
 
 use crate::utils::parse_key;
 use crate::event::{Event, Key, Mods};
-use crate::comms::{InComm, OutComm};
+use crate::transport::{InComm, OutComm};
 use crate::state::State;
 
 use fltk::enums::{Event as FltkEvent, Key as FltkKey, Shortcut as FltkMods};
