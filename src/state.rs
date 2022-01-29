@@ -5,7 +5,7 @@ use tui::widgets::Widget;
 use serde::{Serialize, Deserialize};
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::aux::parse_color;
+use crate::utils::parse_color;
 
 pub fn get_at(ss: &[String], x: usize, y: usize) -> String {
     ss.get(y).and_then(|s| s.chars().nth(x)).map(|c| c.to_string()).unwrap_or_else(|| " ".to_string())

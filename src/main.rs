@@ -1,4 +1,4 @@
-mod aux;
+mod utils;
 mod opts;
 mod comms;
 mod state;

@@ -15,7 +15,7 @@ use crate::state::State;
 use crate::comms;
 use crate::comms::{InComm, OutComm};
 use crate::event::{Event, Key, Mods};
-use crate::aux::parse_key;
+use crate::utils::parse_key;
 
 impl TryFrom<TermionKey> for Event {
     type Error = ();

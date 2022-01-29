@@ -8,7 +8,7 @@ use fltk::app::App;
 use fltk::window::Window;
 use fltk::enums::{Font, FrameType, Color};
 
-use crate::aux::parse_key;
+use crate::utils::parse_key;
 use crate::event::{Event, Key, Mods};
 use crate::comms::{InComm, OutComm};
 use crate::state::State;
