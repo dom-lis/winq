@@ -1,6 +1,7 @@
 pub mod tcp;
 pub mod child;
 pub mod stdio;
+#[cfg(not(windows))]
 pub mod socket;
 
 use serde::{Serialize, Deserialize};

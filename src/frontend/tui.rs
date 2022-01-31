@@ -4,6 +4,10 @@ use std::sync::mpsc::{channel, SyncSender, Receiver};
 use std::error::Error;
 use std::thread;
 use tui::Terminal;
+use tui::style::{Color, Style, Modifier};
+use tui::buffer::Buffer;
+use tui::layout::Rect;
+use tui::widgets::Widget;
 use tui::backend::TermionBackend;
 use termion::event::{
     Key as TermionKey,
@@ -11,11 +15,13 @@ use termion::event::{
     MouseEvent as TermionMouseEvent,
     MouseButton as TermionMouseButton,
 };
+use unicode_segmentation::UnicodeSegmentation;
 use crate::state::State;
 use crate::transport;
 use crate::transport::{InComm, OutComm};
 use crate::event::{Event, Key, Mods};
-use crate::utils::parse_key;
+use crate::utils::{parse_key, parse_color};
+use crate::state::get_at;
 
 impl TryFrom<TermionKey> for Event {
     type Error = ();
@@ -187,6 +193,48 @@ impl TryFrom<TermionEvent> for Event {
             TermionEvent::Key(k) => Event::try_from(k),
             TermionEvent::Mouse(m) => Event::try_from(m),
             _ => Err(()),
+        }
+    }
+}
+
+impl State {
+    pub fn get_fg(&self, x: usize, y: usize) -> Color {
+        let fg = get_at(&self.fg, x, y);
+        parse_color(&fg)
+    }
+
+    pub fn get_bg(&self, x: usize, y: usize) -> Color {
+        let bg = get_at(&self.bg, x, y);
+        parse_color(&bg)
+    }
+    
+    pub fn get_mod(&self, x: usize, y: usize) -> Modifier {
+        let m = get_at(&self.style, x ,y);
+        match m.as_str() {
+            "1" => Modifier::BOLD,
+            "2" => Modifier::ITALIC,
+            "3" => Modifier::BOLD | Modifier::ITALIC,
+             _ => Modifier::empty(),
+        }
+    }
+
+    pub fn get_style(&self, x: usize, y: usize) -> Style {
+        Style::default()
+            .fg(self.get_fg(x, y))
+            .bg(self.get_bg(x, y))
+            .add_modifier(self.get_mod(x, y))
+    }
+}
+
+impl Widget for State {
+    fn render(self, rect: Rect, buf: &mut Buffer) {
+        for (y, line) in self.text.iter().take(rect.height as usize).enumerate() {
+            for (x, symbol) in line.graphemes(true).take(rect.width as usize).enumerate() {
+                let style = self.get_style(x, y);
+                buf.get_mut(x as u16 + rect.left(), y as u16 + rect.top())
+                    .set_symbol(symbol)
+                    .set_style(style);
+            }
         }
     }
 }
