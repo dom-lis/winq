@@ -1,9 +1,3 @@
-pub mod tcp;
-pub mod child;
-pub mod stdio;
-#[cfg(not(windows))]
-pub mod socket;
-
 use serde::{Serialize, Deserialize};
 use crate::state::State;
 use crate::event::Event;
@@ -21,8 +15,18 @@ pub use InComm::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum OutComm {
-    Size((u16, u16)),
+    Size((i32, i32)),
     Event(Event)
 }
 
 pub use OutComm::*;
+
+use std::io;
+use std::io::{Read, Write};
+
+pub fn open() -> io::Result<(Box<dyn Read + Send>, Box<dyn Write + Send>)> {
+    Ok((
+        Box::new(io::stdin()),
+        Box::new(io::stdout())
+    ))
+}
