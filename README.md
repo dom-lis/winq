@@ -1,29 +1,17 @@
-# tulip
+# winq
 
-Tulip is a command-line utility intended to be used as front-end for tui
-applications.
-
-Tulip runs executable as a child process and communicates with it through
-anonymous pipe.
+Winq is a graphical utility that opens a window and draws text to it
 
 ## Why?
 
-Every modern language can do json and asynchronous i/o, but working with
-terminals &mdash; not really. There are some libraries but I am never satisfied
-with those.
+Winq is intended to build applications with text-based user interface.
 
-Hence this project &mdash; a terminal user interface proxy.
+This project is an application that would communicate with another process and draw it's interfaces, communicated with
+Winq using special protocol in either simple, `sscanf`-friendly format, or as new-line separated json objects.
 
-Tulip sends terminal input events into a client application via stdin. It also
-accepts client application's output and displays it on the screen.
+Initially Winq (then known as Tulip) was a terminal application. I since reconsidered my approach and now the
+tool is, to some extent, it's own terminal emulator. This decision was made largely because of poor terminals'
+support for localization, specifically difficulties with different (non en-us) layouts, as well as archaic, sequential,
+stateful ways of communication.
 
-### Plans for future
-
-- [ ] Graceful shutdown (especially when receiving signals)
-- [x] Colors
-- [x] Screen buffering/diffing (done by tui-rs)
-- [ ] Key codes (for clients to be able to recognise same key in different layouts)
-
-## License
-
-[MIT](LICENSE)
+[GNU GPLv3](LICENSE)
