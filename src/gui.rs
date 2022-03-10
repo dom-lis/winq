@@ -1,4 +1,3 @@
-use std::cell::Cell;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{SyncSender, Receiver};
 use std::error::Error;
@@ -7,7 +6,7 @@ use fltk::prelude::*;
 use fltk::{app, draw};
 use fltk::app::App;
 use fltk::window::Window;
-use fltk::enums::{Font, FrameType, Color};
+use fltk::enums::FrameType;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::event::Event;
@@ -45,7 +44,6 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
             let win_hi = w.h();
             let win_wf = win_wi as f64;
             let win_hf = win_hi as f64;
-            let win_y = w.y();
             let new_size_w = (win_wf / col_wf) as i32;
             let new_size_h = (win_hf / row_hf) as i32;
             if cols != new_size_w || rows != new_size_h {
