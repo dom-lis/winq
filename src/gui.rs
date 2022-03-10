@@ -23,7 +23,7 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
 
     let state: Arc<Mutex<State>> = Arc::new(Mutex::default());
     
-    let font_size = 32;
+    let font_size = config.lock().unwrap().font_size.unwrap_or(16);
     draw::set_font(config.lock().unwrap().font_styles.regular, font_size);
     let col_wf = draw::width("@");
     let col_wi = col_wf as i32;
