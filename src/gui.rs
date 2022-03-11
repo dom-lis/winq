@@ -75,33 +75,35 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
                     let style = state.style.get(i).map(|s| s.chars().collect::<Vec<_>>()).unwrap_or_default();
                     let fg = state.fg.get(i).map(|s| s.chars().collect::<Vec<_>>()).unwrap_or_default();
                     let chunks = {
-                        let mut chunks = Vec::default();
-                        let mut chunk = String::default();
-                        let mut current_style = &font_styles.regular;
-                        let mut current_fg = &color_scheme.foreground;
-                        for (j, g) in UnicodeSegmentation::graphemes(line.as_str(), true).enumerate() {
-                            let new_style = style.get(j)
-                                .map(|c| c.to_digit(16).map(|i| font_styles.by_index(i as usize)))
-                                .flatten().flatten()
-                                .unwrap_or(&font_styles.regular);
-                            let new_fg = fg.get(j)
-                                .map(|c| c.to_digit(16).map(|i| color_scheme.by_index(i as usize)))
-                                .flatten().flatten()
-                                .unwrap_or(&color_scheme.foreground);
-                            if current_style != new_style || current_fg != new_fg {
-                                chunks.push((j, current_style, current_fg, chunk));
-                                chunk = String::default();
-                                current_style = new_style;
-                                current_fg = new_fg;
-                            } else {
-                                chunk += g;
-                            }
-                        }
-                        chunks
+                        let mut curr_style = &font_styles.regular;
+                        let mut curr_fg = &color_scheme.foreground;
+                        UnicodeSegmentation::graphemes(line.as_str(), true)
+                            .enumerate()
+                            .fold(Vec::default(), |mut chunks, (j, g)| {
+                                let new_style = style.get(j)
+                                    .map(|c| c.to_digit(16).map(|i| font_styles.by_index(i as usize)))
+                                    .flatten().flatten()
+                                    .unwrap_or(&font_styles.regular);
+
+                                let new_fg = fg.get(j)
+                                    .map(|c| c.to_digit(16).map(|i| color_scheme.by_index(i as usize)))
+                                    .flatten().flatten()
+                                    .unwrap_or(&color_scheme.foreground);
+                                
+                                if chunks.is_empty() || curr_style != new_style || curr_fg != new_fg {
+                                    curr_style = new_style;
+                                    curr_fg = new_fg;
+                                    chunks.push((j, curr_style, curr_fg, String::from(g)));
+                                } else if let Some(last) = chunks.last_mut() {
+                                    last.3 += g;
+                                }
+
+                                chunks
+                            })
                     };
-                    let x = ((i as f64) * row_hf) as i32;
+                    let y = (((i + 1) as f64) * row_hf) as i32;
                     for (j, style, fg, text) in chunks {
-                        let y = ((j as f64) * col_wf) as i32;
+                        let x = ((j as f64) * col_wf) as i32;
                         draw::set_draw_color(*fg);
                         draw::set_font(*style, font_size);
                         draw::draw_text(&text, x, y);
