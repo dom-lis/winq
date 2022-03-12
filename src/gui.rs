@@ -6,7 +6,7 @@ use fltk::prelude::*;
 use fltk::{app, draw};
 use fltk::app::App;
 use fltk::window::Window;
-use fltk::enums::FrameType;
+use fltk::enums::{FrameType, Event as FltkEvent};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::event::Event;
@@ -112,12 +112,41 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
             }
         }
     });
+
     win.handle({
         let tx = tx.clone();
+
+        let mut last_mx = -1;
+        let mut last_my = -1;
+
         move |_, ev| {
-            Event::try_from(ev)
-                .map(|ev| tx.send(OutComm::Event(ev)))
-                .is_ok()
+            let x = app::event_x() / col_wi;
+            let y = app::event_y() / row_hi;
+            let button = app::event_button();
+            
+            let new_xy = if last_mx != x || last_my != y {
+                last_mx = x;
+                last_my = y;
+                Some((x, y))
+            } else {
+                None
+            };
+            
+            let ev = match ev {
+                FltkEvent::Move => new_xy.map(|(x, y)| Ok(Event::MouseMove { x, y })),
+                FltkEvent::Push => Some(Ok(Event::MouseDown { x, y, button })),
+                FltkEvent::Released => Some(Ok(Event::MouseUp { x, y, button })),
+                FltkEvent::Drag => Some(Ok(Event::MouseDrag { x, y, button })),
+                _ => Some(Event::try_from(ev)),
+            };
+            
+            match ev {
+                Some(ev) => match ev {
+                    Ok(ev) => tx.send(OutComm::Event(ev)).is_ok(),
+                    Err(_) => false,
+                },
+                None => true
+            }
         }
     });
     win.end();
