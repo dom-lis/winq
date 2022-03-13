@@ -2,7 +2,7 @@ from subprocess import Popen, PIPE
 from time import sleep
 from datetime import datetime
 
-subp = Popen('winq', stdin=PIPE)
+subp = Popen(['cargo', 'run'], stdin=PIPE)
 
 while True:
     sleep(1)

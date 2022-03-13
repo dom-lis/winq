@@ -29,6 +29,7 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
     let col_wi = col_wf as i32;
     let row_hi = fltk::draw::height();
     let row_hf = row_hi as f64;
+    let y_shift = row_hf * 0.15;
 
     let mut win = Window::default();
     win.set_frame(FrameType::NoBox);
@@ -101,7 +102,7 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
                                 chunks
                             })
                     };
-                    let y = (((i + 1) as f64) * row_hf) as i32;
+                    let y = (((i + 1) as f64) * row_hf - y_shift) as i32;
                     for (j, style, fg, text) in chunks {
                         let x = ((j as f64) * col_wf) as i32;
                         draw::set_draw_color(*fg);
