@@ -14,4 +14,12 @@ tool is, to some extent, it's own terminal emulator. This decision was made larg
 support for localization, specifically difficulties with different (non en-us) layouts, as well as archaic, sequential,
 stateful ways of communication.
 
+### Examples
+
+You can run examples with a command like
+
+```
+python examples/(desired example).py
+```
+
 [GNU GPLv3](LICENSE)
