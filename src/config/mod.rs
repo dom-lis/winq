@@ -15,6 +15,8 @@ pub struct Config {
     #[serde(default="default_font_size")]
     pub font_size: i32,
     #[serde(default)]
+    pub line_shift: f64,
+    #[serde(default)]
     pub color_scheme: ColorScheme,
 }
 
@@ -39,7 +41,9 @@ impl Default for Config {
         Config {
             font_styles: FontConfig::default(),
             font_size: default_font_size(),
+            line_shift: f64::default(),
             color_scheme: ColorScheme::default()
         }
     }
 }
+

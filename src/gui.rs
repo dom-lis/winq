@@ -29,7 +29,6 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
     let col_wi = col_wf as i32;
     let row_hi = fltk::draw::height();
     let row_hf = row_hi as f64;
-    let y_shift = row_hf * 0.15;
 
     let mut win = Window::default();
     win.set_frame(FrameType::NoBox);
@@ -54,13 +53,14 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
             }
             let state = state.lock().unwrap();
             let config = config.lock().unwrap();
+            let line_shift = config.line_shift * (config.font_size as f64);
             let color_scheme = &config.color_scheme;
             let font_styles = &config.font_styles;
             draw::set_draw_color(color_scheme.background);
             draw::draw_rectf(0, 0, win_wi, win_hi);
             for i in 0..(rows as usize) {
                 if let Some(bg) = state.bg.get(i) {
-                    let y = ((i as f64) * row_hf) as i32;
+                    let y = ((i as f64) * row_hf - line_shift) as i32;
                     let chars = bg.chars().take(cols as usize);
                     for (j, bg) in chars.enumerate() {
                         let x = ((j as f64) * col_wf) as i32;
@@ -102,7 +102,7 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
                                 chunks
                             })
                     };
-                    let y = (((i + 1) as f64) * row_hf - y_shift) as i32;
+                    let y = (((i + 1) as f64) * row_hf - line_shift) as i32;
                     for (j, style, fg, text) in chunks {
                         let x = ((j as f64) * col_wf) as i32;
                         draw::set_draw_color(*fg);
