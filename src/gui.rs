@@ -58,10 +58,10 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
             let font_styles = &config.font_styles;
             draw::set_draw_color(color_scheme.background);
             draw::draw_rectf(0, 0, win_wi, win_hi);
-            for i in 0..(rows as usize) {
+            for i in 0..(rows as usize + 1) {
                 if let Some(bg) = state.bg.get(i) {
                     let y = ((i as f64) * row_hf - line_shift) as i32;
-                    let chars = bg.chars().take(cols as usize);
+                    let chars = bg.chars().take(cols as usize + 1);
                     for (j, bg) in chars.enumerate() {
                         let x = ((j as f64) * col_wf) as i32;
                         if let Some(color) = bg.to_digit(16).map(|i| color_scheme.by_index(i as usize)).flatten() {
@@ -71,7 +71,7 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
                     }
                 }
             }
-            for i in 0..(rows as usize) {
+            for i in 0..(rows as usize + 1) {
                 if let Some(line) = state.text.get(i) {
                     let style = state.style.get(i).map(|s| s.chars().collect::<Vec<_>>()).unwrap_or_default();
                     let fg = state.fg.get(i).map(|s| s.chars().collect::<Vec<_>>()).unwrap_or_default();
