@@ -12,3 +12,4 @@ while True:
     subp.stdin.write(f'{now}\n'.encode('utf-8'))
     subp.stdin.write(b'\tflush\n')
     subp.stdin.flush()
+

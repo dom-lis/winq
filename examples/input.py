@@ -56,8 +56,10 @@ while True:
 
     except Empty:
         break
+
     except KeyboardInterrupt:
         break
+
     except:
         print(traceback.format_exc())
 
