@@ -5,3 +5,4 @@ pub fn parse_key(b: u8) -> Option<char> {
         None
     }
 }
+

@@ -10,3 +10,4 @@ pub fn deserialize<'d, D: Deserializer<'d>>(deserializer: D) -> Result<Font, D::
     let s = String::deserialize(deserializer)?;
     Ok(Font::by_name(&s))
 }
+

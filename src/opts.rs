@@ -9,3 +9,4 @@ pub struct Opts {
     #[clap(short, long, help="use json for communcation")]
     pub json: bool,
 }
+

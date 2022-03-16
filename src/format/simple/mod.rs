@@ -2,8 +2,9 @@ use std::io::{Read, Write, BufRead, BufReader};
 use std::sync::mpsc::{sync_channel, SyncSender, Receiver};
 use std::error::Error;
 use std::thread;
+use crate::msg;
+use crate::msg::{CHAN_BOUND, GuiMsg, ClientMsg, BadComm};
 use crate::state::State;
-use crate::transport::{CHAN_BOUND, InComm, OutComm, BadComm};
 
 mod repr;
 
@@ -18,7 +19,7 @@ pub enum Mode {
     Style,
 }
 
-pub fn open(r: Box<dyn Read + Send>, w: Box<dyn Write + Send>) -> (SyncSender<OutComm>, Receiver<InComm>) {
+pub fn open(r: Box<dyn Read + Send>, w: Box<dyn Write + Send>) -> (SyncSender<ClientMsg>, Receiver<GuiMsg>) {
     let (in_tx, in_rx) = sync_channel(CHAN_BOUND);
     thread::spawn({
         let r = r;
@@ -34,7 +35,7 @@ pub fn open(r: Box<dyn Read + Send>, w: Box<dyn Write + Send>) -> (SyncSender<Ou
                             mode = Mode::Text;
                             let my_state = state.clone();
                             state = State::default();
-                            in_tx.send(crate::transport::State(my_state))?;
+                            in_tx.send(msg::State(my_state))?;
                         }
                         "\ttext" => {
                             mode = Mode::Text;
@@ -81,3 +82,4 @@ pub fn open(r: Box<dyn Read + Send>, w: Box<dyn Write + Send>) -> (SyncSender<Ou
 
     (out_tx, in_rx)
 }
+

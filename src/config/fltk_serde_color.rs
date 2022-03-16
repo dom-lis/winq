@@ -11,3 +11,4 @@ pub fn deserialize<'d, D: Deserializer<'d>>(deserializer: D) -> Result<Color, D:
     let z = u32::from_str_radix(&s, 16).map_err(serde::de::Error::custom)?;
     Ok(Color::from_hex(z))
 }
+

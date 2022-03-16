@@ -10,11 +10,11 @@ use fltk::enums::{FrameType, Event as FltkEvent};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::event::Event;
-use crate::transport::{InComm, OutComm};
+use crate::msg::{GuiMsg, ClientMsg};
 use crate::state::State;
 use crate::config::Config;
 
-pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn Error + Send + Sync>> {
+pub fn run(tx: SyncSender<ClientMsg>, rx: Receiver<GuiMsg>) -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let app = App::default()
         .load_system_fonts();
@@ -49,7 +49,7 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
             if cols != new_size_w || rows != new_size_h {
                 cols = new_size_w;
                 rows = new_size_h;
-                tx.send(OutComm::Size((cols, rows))).unwrap();
+                tx.send(ClientMsg::Size((cols, rows))).unwrap();
             }
             let state = state.lock().unwrap();
             let config = config.lock().unwrap();
@@ -143,7 +143,7 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
             
             match ev {
                 Some(ev) => match ev {
-                    Ok(ev) => tx.send(OutComm::Event(ev)).is_ok(),
+                    Ok(ev) => tx.send(ClientMsg::Event(ev)).is_ok(),
                     Err(_) => false,
                 },
                 None => true
@@ -160,9 +160,9 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
                 .try_iter()
                 .try_for_each(|recv| -> Result<(), Box<dyn Error>> {
                     match recv {
-                        InComm::Quit() => app::quit(),
-                        InComm::BadComm(e) => log::warn!("bad comm: {:?}", e),
-                        InComm::State(new_state) => {
+                        GuiMsg::Quit => app::quit(),
+                        GuiMsg::BadComm(e) => log::warn!("bad comm: {:?}", e),
+                        GuiMsg::State(new_state) => {
                             let mut s = state.lock().unwrap();
                             *s = new_state;
                             app::redraw();
@@ -178,3 +178,4 @@ pub fn run(tx: SyncSender<OutComm>, rx: Receiver<InComm>) -> Result<(), Box<dyn 
     
     Ok(())
 }
+

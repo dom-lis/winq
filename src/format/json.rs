@@ -3,12 +3,12 @@ use std::sync::mpsc::{sync_channel, SyncSender, Receiver};
 use std::error::Error;
 use std::thread;
 use serde_json::error::Category;
-use crate::transport::{CHAN_BOUND, InComm, OutComm, BadComm};
+use crate::msg::{CHAN_BOUND, GuiMsg, ClientMsg, BadComm};
 
 type E = Box<dyn Error + Send + Sync>;
 type R = Result<(), E>;
 
-pub fn open(r: Box<dyn Read + Send>, w: Box<dyn Write + Send>) -> (SyncSender<OutComm>, Receiver<InComm>) {
+pub fn open(r: Box<dyn Read + Send>, w: Box<dyn Write + Send>) -> (SyncSender<ClientMsg>, Receiver<GuiMsg>) {
     let (in_tx, in_rx) = sync_channel(CHAN_BOUND);
     thread::spawn({
         let r = r;
@@ -44,3 +44,4 @@ pub fn open(r: Box<dyn Read + Send>, w: Box<dyn Write + Send>) -> (SyncSender<Ou
 
     (out_tx, in_rx)
 }
+

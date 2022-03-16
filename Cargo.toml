@@ -6,6 +6,14 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+name = "winq"
+path = "src/lib.rs"
+
+[[bin]]
+name = "winq"
+path = "src/main.rs"
+
 [dependencies]
 log = "0.4.14"
 dirs = "4.0.0"
@@ -15,3 +23,4 @@ unicode-segmentation = "1.8.0"
 clap = { version = "3.0.10", features = ["derive"] }
 fltk = { version = "1.2.27", features = ["fltk-bundled"] }
 serde = { version = "1.0.135", features = ["derive"] }
+
