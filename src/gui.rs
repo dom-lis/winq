@@ -15,6 +15,15 @@ use crate::msg::{GuiMsg, ClientMsg};
 use crate::state::State;
 use crate::config::Config;
 
+macro_rules! join {
+    ($a:expr, $b:expr) => {
+        match ($a, $b) {
+            (Some(a), Some(b)) => Some((a, b)),
+            _ => None
+        }
+    }
+}
+
 pub fn run(opts: &Opts, tx: SyncSender<ClientMsg>, rx: Receiver<GuiMsg>) -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let app = App::default()
@@ -39,15 +48,20 @@ pub fn run(opts: &Opts, tx: SyncSender<ClientMsg>, rx: Receiver<GuiMsg>) -> Resu
             _ => w,
         };
 
-        w = match (opts.width, opts.height) {
-            (Some(width), Some(height)) => w.with_size(width, height),
-            _ => w
+        let wh = join!(opts.width, opts.height);
+        let cr = join!(opts.cols, opts.rows);
+        w = match (wh, cr) {
+            (Some((w1, h)), None) => w.with_size(w1, h),
+            (None, Some((c, r))) => w.with_size((c as f64 * col_wf) as i32, (r as f64 * row_hf) as i32),
+            _ => w,
         };
 
-        w = match (opts.center, opts.x, opts.y) {
-            (true, None, None) => w.center_screen(),
-            (false, Some(x), Some(y)) => w.with_pos(x, y),
-            _ => w
+        w = match opts.center {
+            true => w.center_screen(),
+            false => match (opts.x, opts.y) {
+                (Some(x), Some(y)) => w.with_pos(x, y),
+                _ => w
+            }
         };
 
         // w.set_frame(FrameType::NoBox);

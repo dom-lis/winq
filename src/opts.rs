@@ -1,7 +1,7 @@
 use clap::Parser;
 
 #[derive(Parser)]
-#[clap(name="tulip", about="terminal text-user interface proxy (or client)")]
+#[clap(name="winq", about="graphical text-user interface utility")]
 pub struct Opts {
     #[clap(long, help="path to log file")]
     pub log: Option<String>,
@@ -15,7 +15,13 @@ pub struct Opts {
     #[clap(short, long, requires="width", help="initial window height")]
     pub height: Option<i32>,
 
-    #[clap(short, long, requires_all=&["width", "height"], help="center window on screen")]
+    #[clap(short, long, requires="rows", help="initial window width in columns")]
+    pub cols: Option<i32>,
+
+    #[clap(short, long, requires="cols", help="initial window height in rows")]
+    pub rows: Option<i32>,
+
+    #[clap(short='C', long, requires_all=&["width", "height"], help="center window on screen")]
     pub center: bool,
 
     #[clap(short, long, requires="y", conflicts_with="center", help="initial window horizontal position")]
