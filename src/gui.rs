@@ -6,15 +6,16 @@ use fltk::prelude::*;
 use fltk::{app, draw};
 use fltk::app::App;
 use fltk::window::Window;
-use fltk::enums::{FrameType, Event as FltkEvent};
+use fltk::enums::{Event as FltkEvent};
 use unicode_segmentation::UnicodeSegmentation;
 
+use crate::opts::Opts;
 use crate::event::Event;
 use crate::msg::{GuiMsg, ClientMsg};
 use crate::state::State;
 use crate::config::Config;
 
-pub fn run(tx: SyncSender<ClientMsg>, rx: Receiver<GuiMsg>) -> Result<(), Box<dyn Error + Send + Sync>> {
+pub fn run(opts: &Opts, tx: SyncSender<ClientMsg>, rx: Receiver<GuiMsg>) -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let app = App::default()
         .load_system_fonts();
@@ -30,8 +31,29 @@ pub fn run(tx: SyncSender<ClientMsg>, rx: Receiver<GuiMsg>) -> Result<(), Box<dy
     let row_hi = fltk::draw::height();
     let row_hf = row_hi as f64;
 
-    let mut win = Window::default();
-    win.set_frame(FrameType::NoBox);
+    let mut win = {
+        let mut w = Window::default();
+
+        w = match &opts.title {
+            Some(title) => w.with_label(title),
+            _ => w,
+        };
+
+        w = match (opts.width, opts.height) {
+            (Some(width), Some(height)) => w.with_size(width, height),
+            _ => w
+        };
+
+        w = match (opts.center, opts.x, opts.y) {
+            (true, None, None) => w.center_screen(),
+            (false, Some(x), Some(y)) => w.with_pos(x, y),
+            _ => w
+        };
+
+        // w.set_frame(FrameType::NoBox);
+        w
+    };
+
     win.draw({
         let tx = tx.clone();
         let state = state.clone();
@@ -150,6 +172,7 @@ pub fn run(tx: SyncSender<ClientMsg>, rx: Receiver<GuiMsg>) -> Result<(), Box<dy
             }
         }
     });
+
     win.end();
     win.show();
     

@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         format::simple::open(r, w)
     };
     
-    gui::run(tx, rx)?;
+    gui::run(&opts, tx, rx)?;
 
     Ok(())
 
