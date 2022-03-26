@@ -15,12 +15,16 @@ name = "winq"
 path = "src/main.rs"
 
 [dependencies]
-log = "0.4.14"
-dirs = "4.0.0"
-simplelog = "0.11.2"
-serde_json = "1.0.78"
-unicode-segmentation = "1.8.0"
 clap = { version = "3.0.10", features = ["derive"] }
-fltk = { version = "1.2.27", features = ["fltk-bundled"] }
+dirs = "4.0.0"
+log = "0.4.14"
 serde = { version = "1.0.135", features = ["derive"] }
+serde_json = "1.0.78"
+simplelog = "0.11.2"
+unicode-segmentation = "1.8.0"
 
+[dependencies.x86_64-unknown-linux-gnu]
+fltk = { version = "1.2.27", features = ["fltk-bundled"] }
+
+[dependencies.x86_64-unknown-freebsd]
+fltk = { version = "1.2.27", features = [] }
