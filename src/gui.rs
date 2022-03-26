@@ -43,10 +43,9 @@ pub fn run(opts: &Opts, tx: SyncSender<ClientMsg>, rx: Receiver<GuiMsg>) -> Resu
     let mut win = {
         let mut w = Window::default();
 
-        w = match &opts.title {
-            Some(title) => w.with_label(title),
-            _ => w,
-        };
+        let default_label = "winq".to_string();
+        let label = &opts.title.as_ref().unwrap_or(&default_label);
+        w = w.with_label(&label);
 
         let wh = join!(opts.width, opts.height);
         let cr = join!(opts.cols, opts.rows);
