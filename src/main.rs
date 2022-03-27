@@ -15,6 +15,13 @@ mod config;
 
 fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let opts = Opts::parse();
+
+    if opts.dump_conf {
+        let c = config::Config::default();
+        let s = serde_json::to_string_pretty(&c)?;
+        println!("{}", s);
+        return Ok(())
+    }
     
     if let Some(log) = &opts.log {
         use log::LevelFilter;

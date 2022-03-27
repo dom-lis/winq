@@ -99,7 +99,9 @@ pub fn run(opts: &Opts, tx: SyncSender<ClientMsg>, rx: Receiver<GuiMsg>) -> Resu
                     let chars = bg.chars().take(cols as usize + 1);
                     for (j, bg) in chars.enumerate() {
                         let x = ((j as f64) * col_wf) as i32;
-                        if let Some(color) = bg.to_digit(16).map(|i| color_scheme.by_index(i as usize)).flatten() {
+                        let digit = bg.to_digit(16);
+                        let color = digit.and_then(|i| color_scheme.by_index(i as usize));
+                        if let Some(color) = color {
                             draw::set_draw_color(*color);
                             draw::draw_rectf(x, y, col_wi, row_hi);
                         }
@@ -117,13 +119,13 @@ pub fn run(opts: &Opts, tx: SyncSender<ClientMsg>, rx: Receiver<GuiMsg>) -> Resu
                             .enumerate()
                             .fold(Vec::default(), |mut chunks, (j, g)| {
                                 let new_style = style.get(j)
-                                    .map(|c| c.to_digit(16).map(|i| font_styles.by_index(i as usize)))
-                                    .flatten().flatten()
+                                    .and_then(|c| c.to_digit(16))
+                                    .and_then(|i| font_styles.by_index(i as usize))
                                     .unwrap_or(&font_styles.regular);
 
                                 let new_fg = fg.get(j)
-                                    .map(|c| c.to_digit(16).map(|i| color_scheme.by_index(i as usize)))
-                                    .flatten().flatten()
+                                    .and_then(|c| c.to_digit(16)
+                                    .and_then(|i| color_scheme.by_index(i as usize)))
                                     .unwrap_or(&color_scheme.foreground);
                                 
                                 if chunks.is_empty() || curr_style != new_style || curr_fg != new_fg {

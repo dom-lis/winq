@@ -6,6 +6,9 @@ pub struct Opts {
     #[clap(long, help="path to log file")]
     pub log: Option<String>,
 
+    #[clap(short, long, help="dump default config to output and exit")]
+    pub dump_conf: bool,
+
     #[clap(short, long, help="use json for communication")]
     pub json: bool,
 

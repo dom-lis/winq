@@ -67,75 +67,75 @@ impl ColorScheme {
     }
 
     pub fn default_background() -> Color {
-        Color::from_hex(0xf0f0f0)
+        Color::from_hex_str("#f0f0f0").unwrap()
     }
 
     pub fn default_foreground() -> Color {
-        Color::from_hex(0x424242)
+        Color::from_hex_str("#424242").unwrap()
     }
 
     pub fn default_normal_black() -> Color {
-        Color::from_hex(0x424242)
+        Color::from_hex_str("#424242").unwrap()
     }
 
     pub fn default_normal_white() -> Color {
-        Color::from_hex(0xbdbdbd)
+        Color::from_hex_str("#bdbdbd").unwrap()
     }
 
     pub fn default_normal_red() -> Color {
-        Color::from_hex(0xb71c1c)
+        Color::from_hex_str("#b71c1c").unwrap()
     }
 
     pub fn default_normal_green() -> Color {
-        Color::from_hex(0x2e7d32)
+        Color::from_hex_str("#2e7d32").unwrap()
     }
 
     pub fn default_normal_blue() -> Color {
-        Color::from_hex(0x0d47a1)
+        Color::from_hex_str("#0d47a1").unwrap()
     }
 
     pub fn default_normal_magenta() -> Color {
-        Color::from_hex(0x6a1b9a)
+        Color::from_hex_str("#6a1b9a").unwrap()
     }
 
     pub fn default_normal_cyan() -> Color {
-        Color::from_hex(0x0097a7)
+        Color::from_hex_str("#0097a7").unwrap()
     }
 
     pub fn default_normal_yellow() -> Color {
-        Color::from_hex(0xa08030)
+        Color::from_hex_str("#a08030").unwrap()
     }
 
     pub fn default_bright_black() -> Color {
-        Color::from_hex(0x000000)
+        Color::from_hex_str("#000000").unwrap()
     }
 
     pub fn default_bright_white() -> Color {
-        Color::from_hex(0xffffff)
+        Color::from_hex_str("#ffffff").unwrap()
     }
 
     pub fn default_bright_red() -> Color {
-        Color::from_hex(0xff1744)
+        Color::from_hex_str("#ff1744").unwrap()
     }
 
     pub fn default_bright_green() -> Color {
-        Color::from_hex(0x00c853)
+        Color::from_hex_str("#00c853").unwrap()
     }
 
     pub fn default_bright_blue() -> Color {
-        Color::from_hex(0x448aff)
+        Color::from_hex_str("#448aff").unwrap()
     }
 
     pub fn default_bright_magenta() -> Color {
-        Color::from_hex(0xe040fb)
+        Color::from_hex_str("#e040fb").unwrap()
     }
 
     pub fn default_bright_cyan() -> Color {
-        Color::from_hex(0x26c6da)
+        Color::from_hex_str("#26c6da").unwrap()
     }
 
     pub fn default_bright_yellow() -> Color {
-        Color::from_hex(0xfdd83d)
+        Color::from_hex_str("#fdd83d").unwrap()
     }
 
 }
@@ -145,10 +145,10 @@ impl Default for ColorScheme {
         ColorScheme {
             background:     ColorScheme::default_background(),
             foreground:     ColorScheme::default_foreground(),
-            normal_black:   ColorScheme::default_bright_yellow(),
+            normal_black:   ColorScheme::default_normal_black(),
             normal_white:   ColorScheme::default_normal_white(),
-            normal_red:     ColorScheme::default_bright_yellow(),
-            normal_green:   ColorScheme::default_bright_yellow(),
+            normal_red:     ColorScheme::default_normal_red(),
+            normal_green:   ColorScheme::default_normal_green(),
             normal_blue:    ColorScheme::default_normal_blue(),
             normal_magenta: ColorScheme::default_normal_magenta(),
             normal_cyan:    ColorScheme::default_normal_cyan(),
