@@ -1,15 +1,15 @@
 use std::io::{Read, Write, BufRead, BufReader};
-use std::sync::mpsc::{sync_channel, SyncSender, Receiver};
+use std::sync::mpsc::{channel, Sender, Receiver};
 use std::error::Error;
 use std::thread;
 use serde_json::error::Category;
-use crate::msg::{CHAN_BOUND, GuiMsg, ClientMsg, BadComm};
+use crate::msg::{GuiMsg, ClientMsg, BadComm};
 
 type E = Box<dyn Error + Send + Sync>;
 type R = Result<(), E>;
 
-pub fn open(r: Box<dyn Read + Send>, w: Box<dyn Write + Send>) -> (SyncSender<ClientMsg>, Receiver<GuiMsg>) {
-    let (in_tx, in_rx) = sync_channel(CHAN_BOUND);
+pub fn open(r: Box<dyn Read + Send>, w: Box<dyn Write + Send>) -> (Sender<ClientMsg>, Receiver<GuiMsg>) {
+    let (in_tx, in_rx) = channel();
     thread::spawn({
         let r = r;
         move || -> R {
@@ -30,7 +30,7 @@ pub fn open(r: Box<dyn Read + Send>, w: Box<dyn Write + Send>) -> (SyncSender<Cl
         }
     });
     
-    let (out_tx, out_rx) = sync_channel(CHAN_BOUND);
+    let (out_tx, out_rx) = channel();
     thread::spawn({
         let mut w = w;
         move || -> R {

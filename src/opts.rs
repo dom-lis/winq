@@ -1,6 +1,6 @@
 use clap::Parser;
 
-#[derive(Parser)]
+#[derive(Default, Parser)]
 #[clap(name="winq", about="graphical text-user interface utility")]
 pub struct Opts {
     #[clap(long, help="path to log file")]

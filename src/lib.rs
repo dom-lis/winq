@@ -1,9 +1,11 @@
-mod msg;
-mod gui;
-mod opts;
-mod event;
-mod state;
-mod utils;
-mod format;
-mod config;
+pub mod msg;
+pub mod gui;
+pub mod opts;
+pub mod event;
+pub mod state;
+pub mod utils;
+pub mod format;
+pub mod config;
+
+pub use opts::Opts;
 

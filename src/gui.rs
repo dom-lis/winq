@@ -1,5 +1,5 @@
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{SyncSender, Receiver};
+use std::sync::mpsc::{Sender, Receiver};
 use std::error::Error;
 use std::convert::TryFrom;
 use fltk::prelude::*;
@@ -24,7 +24,7 @@ macro_rules! join {
     }
 }
 
-pub fn run(opts: &Opts, tx: SyncSender<ClientMsg>, rx: Receiver<GuiMsg>) -> Result<(), Box<dyn Error + Send + Sync>> {
+pub fn run(opts: &Opts, tx: Sender<ClientMsg>, rx: Receiver<GuiMsg>) -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let app = App::default()
         .load_system_fonts();

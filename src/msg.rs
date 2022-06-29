@@ -2,8 +2,6 @@ use serde::{Serialize, Deserialize};
 use crate::state::State;
 use crate::event::Event;
 
-pub const CHAN_BOUND: usize = 1024;
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum GuiMsg {
     Quit,
