@@ -1,6 +1,9 @@
+mod msg;
+mod gui;
+mod opts;
+mod event;
+mod state;
 mod utils;
-
-pub mod msg;
-pub mod state;
-pub mod event;
+mod format;
+mod config;
 
